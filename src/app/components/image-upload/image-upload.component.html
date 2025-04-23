@@ -1,11 +1,20 @@
-<div>
+<div class="upload-comp">
   <div class="upload-btn">
     <h2>Upload Image for Prediction</h2>
     <input type="file" (change)="onFileSelected($event)" />
   </div>
 
-  <div *ngIf="annotatedImage">
-    <h3>Annotated Image:</h3>
-    <img [src]="'data:image/png;base64,' + annotatedImage" alt="Annotated Image" />
+  <p *ngIf="imageLoader"> Prediction in Progress...</p>
+  <div *ngIf="imageLoader" class="loader"></div>
+  <div class="image">
+    <div *ngIf="annotatedImage" class="uploaded-img">
+      <h3>Uploaded Image:</h3>
+      <img [src]="imageUrl" alt="Uploaded Image" />
+    </div>
+    <div *ngIf="annotatedImage" class="upload-an">
+      <h3>Annotated Image:</h3>
+      <img [src]="'data:image/png;base64,' + annotatedImage" alt="Annotated Image" />
+    </div>
   </div>
+
 </div>

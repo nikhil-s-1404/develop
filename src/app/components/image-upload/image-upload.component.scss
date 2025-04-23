@@ -1,8 +1,15 @@
+.upload-comp {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
 .upload-btn {
     background-color: #efefef;
     padding: 32px;
     border-radius: 20px;
-    h2{
+
+    h2 {
         font-style: normal;
         font-weight: 200;
         font-family: sans-serif;
@@ -27,9 +34,11 @@ input[type="file"] {
         margin-right: 16px;
         width: 132px;
         color: transparent;
+
         &:hover {
             background-color: #f3f4f6;
         }
+
         &:active {
             background-color: #e5e7eb;
         }
@@ -61,5 +70,39 @@ input[type="file"] {
     &:focus::file-selector-button {
         outline: 2px solid var(--primary-color);
         outline-offset: 2px;
+    }
+}
+
+/* HTML: <div class="loader"></div> */
+.loader {
+    width: 50px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 8px solid;
+    border-color: #000 #0000;
+    animation: l1 1s infinite;
+}
+
+@keyframes l1 {
+    to {
+        transform: rotate(.5turn)
+    }
+}
+
+.image {
+    display: flex;
+
+    img {
+        width: 256px;
+        height: 256px;
+    }
+
+    .uploaded-img {
+        position: relative;
+    }
+
+    .upload-an {
+        position: relative;
+        left: 92px;
     }
 }
