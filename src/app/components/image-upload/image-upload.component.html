@@ -1,6 +1,8 @@
 <div>
-  <h2>Upload Image for Prediction</h2>
-  <input type="file" (change)="onFileSelected($event)" />
+  <div class="upload-btn">
+    <h2>Upload Image for Prediction</h2>
+    <input type="file" (change)="onFileSelected($event)" />
+  </div>
 
   <div *ngIf="annotatedImage">
     <h3>Annotated Image:</h3>
