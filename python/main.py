@@ -9,6 +9,7 @@ import base64
 from io import BytesIO
 import json
 from fastapi.middleware.cors import CORSMiddleware
+import openai
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -30,6 +31,25 @@ app.add_middleware(
 # Load your model
 model = SegmentationModel().model
 model.load_weights('cancer_weights.h5')
+
+
+# NEW: Set your OpenAI API key
+# openai.api_key = "YOUR-API-KEY-HERE"  # Replace with your actual key
+
+# Utility to call LLM
+def call_llm(summary_text: str) -> str:
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # You can use "gpt-3.5-turbo" if cost is a concern
+            messages=[
+                {"role": "system", "content": "You are a medical imaging assistant. Generate short, professional reports."},
+                {"role": "user", "content": f"Summarize this segmentation output: {summary_text}"}
+            ]
+        )
+        return response['choices'][0]['message']['content']
+    except Exception as e:
+        print(f"LLM Error: {e}")
+        return "Unable to generate report at the moment."
 
 @app.post("/predict/")
 async def predict_image(file: UploadFile = File(...)):
@@ -55,6 +75,9 @@ async def predict_image(file: UploadFile = File(...)):
     annotated_image = image.copy()  # Work with a copy of the original image
     draw = ImageDraw.Draw(annotated_image)
 
+    # Summarize detected regions
+    detected_regions = []
+
     # Example of drawing a simple rectangle around predicted areas
     for i in range(yhat.shape[2]):  # Assuming the model output is a 3D array
         mask = yhat[:, :, i]
@@ -64,6 +87,14 @@ async def predict_image(file: UploadFile = File(...)):
             if cv2.contourArea(contour) > 100:  # Threshold to avoid drawing too small contours
                 x, y, w, h = cv2.boundingRect(contour)
                 draw.rectangle([x, y, x + w, y + h], outline="red", width=2)
+                detected_regions.append({"x": int(x), "y": int(y), "width": int(w), "height": int(h)})
+
+
+    # Create a simple text summary
+    summary_text = f"Detected {len(detected_regions)} regions. Sizes: " + ", ".join([f"{r['width']}x{r['height']}" for r in detected_regions])
+
+    # Call LLM to generate a report
+    generated_report = call_llm(summary_text)
 
     # Convert the annotated image to a base64 string to send to frontend
     buffered = BytesIO()
@@ -72,7 +103,10 @@ async def predict_image(file: UploadFile = File(...)):
 
     # Return the base64-encoded annotated image
     return json.dumps({
-        "annotated_image": annotated_image_base64
+        "annotated_image": annotated_image_base64,
+        "detected_regions": detected_regions,
+        "summary_text": summary_text,
+        "generated_report": generated_report
     })
 
 # Run the app using Uvicorn
