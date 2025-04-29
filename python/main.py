@@ -10,6 +10,11 @@ from io import BytesIO
 import json
 from fastapi.middleware.cors import CORSMiddleware
 import openai
+from dotenv import load_dotenv
+import os
+
+# Load environment variables
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -34,17 +39,20 @@ model.load_weights('cancer_weights.h5')
 
 
 # NEW: Set your OpenAI API key
-# openai.api_key = "YOUR-API-KEY-HERE"  # Replace with your actual key
+# openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 # Utility to call LLM
 def call_llm(summary_text: str) -> str:
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",  # You can use "gpt-3.5-turbo" if cost is a concern
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are a medical imaging assistant. Generate short, professional reports."},
                 {"role": "user", "content": f"Summarize this segmentation output: {summary_text}"}
-            ]
+            ],
+              max_tokens=150,
+              temperature=0.7
         )
         return response['choices'][0]['message']['content']
     except Exception as e:
