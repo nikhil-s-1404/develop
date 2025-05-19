@@ -16,6 +16,11 @@ export class ImageUploadComponent implements OnInit {
   apiUrl = 'http://localhost:8080/predict/';
   imageLoader = false;
 
+patientName: string = '';
+patientAge: number = 0;
+patientGender: string = '';
+
+
   constructor(private http: HttpClient, private sanitizer: DomSanitizer) { }
   ngOnInit(): void {
     // throw new Error('Method not implemented.');
@@ -25,6 +30,10 @@ export class ImageUploadComponent implements OnInit {
   predictImage(file: File): Observable<any> {
     const formData: FormData = new FormData();
     formData.append('file', file, file.name);
+
+  formData.append('patient_name', this.patientName);
+  formData.append('age', this.patientAge.toString());
+  formData.append('gender', this.patientGender);
 
     // Sending POST request with image as form data
     return this.http.post(this.apiUrl, formData);
@@ -45,6 +54,7 @@ export class ImageUploadComponent implements OnInit {
           let result = JSON.parse(response);
           this.annotatedImage = result.annotated_image; // Store the base64 string
           console.log('final response:', this.annotatedImage);
+          console.log('wholesum result:', result);
 
         },
         error: (error) => {
