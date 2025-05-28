@@ -14,7 +14,7 @@ import os
 from transformers import pipeline, set_seed, AutoTokenizer, AutoModelForCausalLM
 
 # Load environment variables
-load_dotenv()
+# load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI()

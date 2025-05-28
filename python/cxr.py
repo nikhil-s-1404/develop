@@ -6,7 +6,10 @@ import json
 import base64
 from PIL import Image
 import matplotlib.pyplot as plt
-from PIL import Image
+from fastapi import FastAPI, File, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+
 
 token = ''
 # Replace with your actual endpoint
@@ -22,57 +25,80 @@ subscription_id = ""
 resource_group = ""
 workspace = ""
 
+# Initialize FastAPI app
+app = FastAPI()
 
+# Allow CORS from Angular frontend
+origins = ["http://localhost:4200"]
 
-def read_image(image_path):
-    """Reads an image from a file path and returns the image as a byte array."""
-    with open(image_path, "rb") as f:
-        return f.read()
-
-
-def score_image(frontal_path, lateral_path, indication, technique, comparison):
-    """Scores frontal and lateral images using the deployed model."""
-    print('score')  
-    input_data = {
-        "frontal_image": base64.encodebytes(read_image(frontal_path)).decode("utf-8"),
-        "lateral_image": base64.encodebytes(read_image(lateral_path)).decode("utf-8"),
-        "indication": indication,
-        "technique": technique,
-        "comparison": comparison,
-    }
-
-    data = {
-        "input_data": {
-           'columns': ['frontal_image', 'lateral_image', 'indication', 'technique', 'comparison'],
-           'index': [0],
-            "data": [
-                list(input_data.values()),
-            ],
-        },
-        "params": {},
-    }
-
-    # Create request json
-    request_file_name = "sample_request_data.json"
-    with open(request_file_name, "w") as request_file:
-        json.dump(data, request_file)
-
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json"
-    }
-    print('Input')
-    response = requests.post(scoring_uri, json=data, headers=headers)
-
-    # Handle response
-    if response.status_code == 200:
-      print("Prediction:", response.json())
-    else:
-      print("Error:", response.status_code, response.text)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 
 
+def read_image(image_file):
+    return base64.encodebytes(image_file.read()).decode("utf-8")
 
-score_image(frontal, lateral, indication, technique, comparison)
+
+@app.post("/predict/")
+async def predict(
+    frontal_image: UploadFile = File(None),
+    lateral_image: UploadFile = File(None),
+    indication: str = Form(""),
+    technique: str = Form(""),
+    comparison: str = Form("")
+):
+    try:
+        input_data = {}
+
+        if frontal_image:
+            input_data["frontal_image"] = base64.encodebytes(await frontal_image.read()).decode("utf-8")
+        if lateral_image:
+            input_data["lateral_image"] = base64.encodebytes(await lateral_image.read()).decode("utf-8")
+        if indication:
+            input_data["indication"] = indication
+        if technique:
+            input_data["technique"] = technique
+        if comparison:
+            input_data["comparison"] = comparison
+
+        if not input_data:
+            return JSONResponse(content={"error": "No valid inputs provided"}, status_code=400)
+
+        columns = list(input_data.keys())
+        values = list(input_data.values())
+
+        data = {
+            "input_data": {
+                "columns": columns,
+                "index": [0],
+                "data": [values]
+            },
+            "params": {}
+        }
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+
+        response = requests.post(scoring_uri, json=data, headers=headers)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return JSONResponse(content={"error": response.text}, status_code=response.status_code)
+
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
+
+
+
+# score_image(frontal, lateral, indication, technique, comparison)
 
