@@ -7,6 +7,16 @@
   <option value="Other">Other</option>
 </select> -->
 
+<!-- Popup Modal -->
+<div *ngIf="showReportPopup" class="modal">
+  <div class="modal-content">
+    <span class="close" (click)="closePopup()">&times;</span>
+    <h3>Patient Summary</h3>
+    <textarea rows="6" cols="160" readonly>{{ patientSummary }}</textarea>
+  </div>
+</div>
+
+
 <div class="upload-comp">
 
   <div class="upload-btn">
@@ -33,6 +43,8 @@
     <div *ngIf="annotatedImage" class="upload-an">
       <h3>Annotated Image:</h3>
       <img [src]="'data:image/png;base64,' + annotatedImage" alt="Annotated Image" />
+
+      <button class="reportBtn" (click)="showReport()">Show Report</button>
     </div>
   </div>
 

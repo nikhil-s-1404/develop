@@ -27,6 +27,9 @@ patientName: string = '';
 patientAge: number = 0;
 patientGender: string = '';
 
+showReportPopup = false;
+patientSummary = '';
+
 
   constructor(private http: HttpClient, private sanitizer: DomSanitizer) { }
   ngOnInit(): void {
@@ -81,12 +84,21 @@ submitImages() {
       this.imageLoader = false;
       console.log('Prediction response:', response);
       this.annotatedImage = response.annotated_image || null;
+      this.patientSummary = response.summary_text;
     },
     error: (err) => {
       this.imageLoader = false;
       console.error('Prediction failed:', err);
     }
   });
+}
+
+closePopup() {
+  this.showReportPopup = false;
+}
+
+showReport() {
+  this.showReportPopup = true;
 }
 
 

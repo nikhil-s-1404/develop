@@ -77,7 +77,7 @@ def adjust_box_for_original_image_size(norm_box, width: int, height: int):
         adjusted_norm_y_max,
     )
 
-# Add Boxes to images 
+# Add Boxes to images
 def show_image_with_bbox(path_frontal, findings, path_lateral=None):
     """Displays frontal and lateral images with bounding boxes around the findings."""
     image_frontal = Image.open(path_frontal)
@@ -140,12 +140,12 @@ def show_image_with_bbox(path_frontal, findings, path_lateral=None):
 def parse_response(response):
     parsed_array = []
     output = response[0]['output']  # Extract the 'output' key
-    
+
     for finding in output:
         text = finding[0]
         bbox = finding[1] if finding[1] != 'null' else None
         parsed_array.append([text, bbox])  # Append as a list
-    
+
     return parsed_array
 
 # Node: Convert image to base64
@@ -160,12 +160,21 @@ def send_response(res):
     # Display the findings with bounding boxes
     result_image = show_image_with_bbox(frontal, findings, lateral)
     result_image.save("output_with_boxes.png")
+
+     # Build summaries
+    radiologist_lines = []
+
+    for idx, (sentence, annotation) in enumerate(findings, 1):
+        # Radiologist version: direct sentence with region note
+        if annotation == 'null':
+            radiologist_lines.append(f"{idx}. {sentence}")
+        else:
+            radiologist_lines.append(f"{idx}. {sentence} (Region identified)")
+
     return {
         "annotated_image": convert_image_to_base64(result_image),
         "detected_regions": ' + str(findings),',
-        "summary_text": ' + str(findings),',
-        "radiologist_summary": ' + str(findings),',
-        "patient_summary": ' + str(findings),'
+        "summary_text": "\n".join(radiologist_lines)
     }
 
 @app.post("/predict/")
@@ -219,11 +228,11 @@ async def predict(
             return send_response(response)
 
     except Exception as e:
-            response = [{'output': 
+            response = [{'output':
                 [
-                ['The heart size is normal.', 'null'], 
-                ['The aorta is tortuous.', [[0.415, 0.225, 0.635, 0.755]]], 
-                ['A patchy infiltrate in the right lower lobe is associated with volume loss.', [[0.115, 0.445, 0.445, 0.795]]], 
+                ['The heart size is normal.', 'null'],
+                ['The aorta is tortuous.', [[0.415, 0.225, 0.635, 0.755]]],
+                ['A patchy infiltrate in the right lower lobe is associated with volume loss.', [[0.115, 0.445, 0.445, 0.795]]],
                 ['A small right pleural effusion is present.', [[0.115, 0.555, 0.425, 0.845]]],
                 ['The left hemithorax is grossly clear.', 'null']
             ]
@@ -238,5 +247,5 @@ async def predict(
 # findings = parse_response(response)
 # # Display the findings with bounding boxes
 # result_image = show_image_with_bbox(frontal, findings, lateral)
-# result_image.save("output_with_boxes.png") 
+# result_image.save("output_with_boxes.png")
 
